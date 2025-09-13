@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
+import Link from 'next/link'
 import {
   BookOpen,
   Users,
@@ -97,6 +98,32 @@ export default function DashboardPage() {
   const [classes, setClasses] = useState<ClassOverview[]>([])
   const [upcomingEvents, setUpcomingEvents] = useState<UpcomingEvent[]>([])
   const [loading, setLoading] = useState(true)
+
+  // يربط الإجراءات السريعة بمسارات/أكشنات فعلية
+  const handleQuickAction = (id: string) => {
+    switch (id) {
+      case 'add-class':
+        window.location.href = '/dashboard/classes'
+        break
+      case 'add-student':
+        window.location.href = '/dashboard/students'
+        break
+      case 'take-attendance':
+        window.location.href = '/dashboard/attendance'
+        break
+      case 'enter-grades':
+        window.location.href = '/dashboard/grades'
+        break
+      case 'create-assignment':
+        window.location.href = '/dashboard/assignments'
+        break
+      case 'view-reports':
+        window.location.href = '/dashboard/reports'
+        break
+      default:
+        break
+    }
+  }
 
   useEffect(() => {
     // Mock data fetching
@@ -361,7 +388,7 @@ export default function DashboardPage() {
         <div className='space-y-6'>
           <RecentActivityCard activities={recentActivity} />
           <UpcomingEventsCard events={upcomingEvents} />
-          <QuickActionsCard />
+          <QuickActionsCard onActionClick={handleQuickAction} />
         </div>
       </div>
 

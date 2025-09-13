@@ -1,7 +1,7 @@
 'use client'
 
 import React from 'react'
-import { Menu, Bell, User, Settings, LogOut } from 'lucide-react'
+import { Menu, Bell, User, Settings, Plus } from 'lucide-react'
 import { useSession } from 'next-auth/react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/Button'
@@ -24,6 +24,21 @@ interface HeaderProps {
 
 const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
   const { data: session } = useSession()
+  const [unread, setUnread] = React.useState<number>(0)
+
+  // مزامنة عدد الإشعارات غير المقروءة من التخزين المحلي
+  React.useEffect(() => {
+    const readCount = () => {
+      const v = Number(localStorage.getItem('notifications:unread') || '0')
+      setUnread(Number.isNaN(v) ? 0 : v)
+    }
+    readCount()
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === 'notifications:unread') readCount()
+    }
+    window.addEventListener('storage', onStorage)
+    return () => window.removeEventListener('storage', onStorage)
+  }, [])
 
   return (
     <header className='sticky top-0 z-40 w-full border-b bg-background'>
@@ -50,18 +65,43 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
           </div>
         </div>
 
-        <div className='flex flex-1 items-center justify-end gap-4'>
+        <div className='flex flex-1 items-center justify-end gap-2 sm:gap-4'>
           <nav className='flex items-center gap-2'>
             <ThemeToggle />
 
-            <Button variant='ghost' size='icon' className='relative'>
-              <Bell className='h-5 w-5' />
-              <span className='absolute right-1 top-1 flex h-2 w-2'>
-                <span className='absolute inline-flex h-full w-full animate-ping rounded-full bg-red-400 opacity-75'></span>
-                <span className='relative inline-flex h-2 w-2 rounded-full bg-red-500'></span>
-              </span>
-              <span className='sr-only'>Notifications</span>
-            </Button>
+            {/* إضافة سريع */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant='ghost' size='icon'>
+                  <Plus className='h-5 w-5' />
+                  <span className='sr-only'>Quick Add</span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align='end'>
+                <DropdownMenuItem asChild>
+                  <Link href='/dashboard/classes'>إضافة فصل</Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href='/dashboard/students'>إضافة طالب</Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href='/dashboard/assignments'>إنشاء واجب</Link>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            {/* Notifications → صفحة مستقلة */}
+            <Link href='/dashboard/notifications' className='relative'>
+              <Button variant='ghost' size='icon' className='relative'>
+                <Bell className='h-5 w-5' />
+                {unread > 0 && (
+                  <span className='absolute -top-1 -right-1 flex min-w-[18px] h-[18px] items-center justify-center rounded-full bg-red-600 px-1 text-[10px] font-medium text-white'>
+                    {unread}
+                  </span>
+                )}
+                <span className='sr-only'>Notifications</span>
+              </Button>
+            </Link>
 
             <DropdownMenu>
               <DropdownMenuTrigger asChild>

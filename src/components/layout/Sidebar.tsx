@@ -23,59 +23,59 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/Avatar'
 import { Badge } from '@/components/ui/Badge'
 
 const navigation = [
-  { 
-    name: 'لوحة التحكم', 
-    href: '/dashboard', 
+  {
+    name: 'لوحة التحكم',
+    href: '/dashboard',
     icon: LayoutDashboard,
-    description: 'نظرة عامة على النظام'
+    description: 'نظرة عامة على النظام',
   },
-  { 
-    name: 'الفصول', 
-    href: '/dashboard/classes', 
+  {
+    name: 'الفصول',
+    href: '/dashboard/classes',
     icon: BookOpen,
-    description: 'إدارة الفصول الدراسية'
+    description: 'إدارة الفصول الدراسية',
   },
-  { 
-    name: 'الطلاب', 
-    href: '/dashboard/students', 
+  {
+    name: 'الطلاب',
+    href: '/dashboard/students',
     icon: Users,
-    description: 'قائمة الطلاب وتفاصيلهم'
+    description: 'قائمة الطلاب وتفاصيلهم',
   },
-  { 
-    name: 'الحضور', 
-    href: '/dashboard/attendance', 
+  {
+    name: 'الحضور',
+    href: '/dashboard/attendance',
     icon: UserCheck,
-    description: 'تسجيل حضور وغياب الطلاب'
+    description: 'تسجيل حضور وغياب الطلاب',
   },
-  { 
-    name: 'الواجبات', 
-    href: '/dashboard/assignments', 
+  {
+    name: 'الواجبات',
+    href: '/dashboard/assignments',
     icon: FileText,
-    description: 'إدارة الواجبات والمهام'
+    description: 'إدارة الواجبات والمهام',
   },
-  { 
-    name: 'الدرجات', 
-    href: '/dashboard/grades', 
+  {
+    name: 'الدرجات',
+    href: '/dashboard/grades',
     icon: Award,
-    description: 'تتبع درجات الطلاب'
+    description: 'تتبع درجات الطلاب',
   },
-  { 
-    name: 'السلوك', 
-    href: '/dashboard/behavior', 
+  {
+    name: 'السلوك',
+    href: '/dashboard/behavior',
     icon: GraduationCap,
-    description: 'متابعة سلوك الطلاب'
+    description: 'متابعة سلوك الطلاب',
   },
-  { 
-    name: 'التقارير', 
-    href: '/dashboard/reports', 
+  {
+    name: 'التقارير',
+    href: '/dashboard/reports',
     icon: BarChart3,
-    description: 'تقارير وإحصائيات'
+    description: 'تقارير وإحصائيات',
   },
-  { 
-    name: 'الإعدادات', 
-    href: '/dashboard/settings', 
+  {
+    name: 'الإعدادات',
+    href: '/dashboard/settings',
     icon: Settings,
-    description: 'إعدادات النظام'
+    description: 'إعدادات النظام',
   },
 ]
 
@@ -87,6 +87,15 @@ interface SidebarProps {
 const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
   const pathname = usePathname()
   const [isCollapsed, setIsCollapsed] = React.useState(false)
+
+  // حفظ حالة الطيّ محلياً لضمان التناسق بين الزيارات
+  React.useEffect(() => {
+    const saved = localStorage.getItem('sidebar:collapsed')
+    if (saved === 'true') setIsCollapsed(true)
+  }, [])
+  React.useEffect(() => {
+    localStorage.setItem('sidebar:collapsed', isCollapsed ? 'true' : 'false')
+  }, [isCollapsed])
 
   return (
     <>
@@ -112,16 +121,18 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
             {!isCollapsed && (
               <div className='flex items-center gap-2'>
                 <div className='h-8 w-8 rounded-lg bg-primary flex items-center justify-center'>
-                  <span className='text-primary-foreground font-bold text-lg'>ف</span>
+                  <span className='text-primary-foreground font-bold text-lg'>
+                    ف
+                  </span>
                 </div>
                 <h1 className='text-xl font-bold text-primary'>
                   نظام إدارة الفصول
                 </h1>
               </div>
             )}
-            <Button 
-              variant='ghost' 
-              size='icon' 
+            <Button
+              variant='ghost'
+              size='icon'
               onClick={() => setIsCollapsed(!isCollapsed)}
               className='hidden lg:flex'
             >
@@ -153,7 +164,10 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
                     <div className='flex flex-col'>
                       <span>{item.name}</span>
                       {isActive && (
-                        <Badge variant='secondary' className='text-xs mt-1 w-fit'>
+                        <Badge
+                          variant='secondary'
+                          className='text-xs mt-1 w-fit'
+                        >
                           {item.description}
                         </Badge>
                       )}
@@ -176,7 +190,9 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
                 </Avatar>
                 <div className='flex flex-col'>
                   <p className='text-sm font-medium'>المعلم</p>
-                  <p className='text-xs text-muted-foreground'>teacher@example.com</p>
+                  <p className='text-xs text-muted-foreground'>
+                    teacher@example.com
+                  </p>
                 </div>
               </div>
               <LogoutButton className='w-full justify-start' />
