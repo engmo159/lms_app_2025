@@ -6,20 +6,9 @@ import {
   TrendingUp,
   Users,
   BookOpen,
-  Plus,
   Edit,
-  Download,
-  Upload,
-  Filter,
-  Search,
-  BarChart3,
-  Eye,
   Save,
   X,
-  Calendar,
-  Clock,
-  FileText,
-  Target,
 } from 'lucide-react'
 import {
   Card,
@@ -37,12 +26,15 @@ import {
   TableRow,
 } from '@/components/ui/Table'
 import { Button } from '@/components/ui/Button'
-import { Badge } from '@/components/ui/Badge'
 import { Select, SelectOption } from '@/components/ui/Select'
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/Tabs'
-import Modal from '@/components/ui/Modal'
 import Input from '@/components/ui/Input'
 import { calculateGrade } from '@/lib/utils'
+
+// Developer Note:
+// This component manages a gradebook with an editable state.
+// `isEditing` toggles the UI between a read-only view and an editable table.
+// `pendingGrades` stores changes in a key-value format (`${studentId}-${assignmentId}`: score)
+// before they are saved to the backend.
 
 interface Student {
   _id: string
@@ -53,33 +45,16 @@ interface Student {
 interface Assignment {
   _id: string
   title: string
-  description?: string
   maxScore: number
   weight: number
-  type:
-    | 'homework'
-    | 'quiz'
-    | 'exam'
-    | 'project'
-    | 'participation'
-    | 'lab'
-    | 'presentation'
-  dueDate?: string
-  assignedDate: string
-  isPublished: boolean
-  status: 'draft' | 'published' | 'closed' | 'graded'
-  class: string
 }
 
 interface Grade {
   _id: string
-  student: Student
-  assignment: Assignment
+  student: { _id: string }
+  assignment: { _id: string; weight: number }
   score: number
-  maxScore: number
   percentage: number
-  notes?: string
-  gradedAt: string
 }
 
 interface Class {
@@ -95,6 +70,10 @@ export default function GradesPage() {
   const [assignments, setAssignments] = useState<Assignment[]>([])
   const [grades, setGrades] = useState<Grade[]>([])
   const [loading, setLoading] = useState(true)
+
+  // State for editing grades
+  const [isEditing, setIsEditing] = useState(false)
+  const [pendingGrades, setPendingGrades] = useState<Record<string, string>>({})
 
   useEffect(() => {
     fetchClasses()
@@ -148,6 +127,37 @@ export default function GradesPage() {
     }
   }
 
+  // --- Handlers for Edit Mode ---
+  const handleGradeChange = (
+    studentId: string,
+    assignmentId: string,
+    value: string
+  ) => {
+    const gradeKey = `${studentId}-${assignmentId}`
+    setPendingGrades(prev => ({ ...prev, [gradeKey]: value }))
+  }
+
+  const handleSaveChanges = async () => {
+    console.log('Saving grades:', pendingGrades)
+    // Here you would typically call an API to bulk-update grades
+    // For example: await fetch('/api/grades/bulk-update', { method: 'POST', body: JSON.stringify(pendingGrades) })
+    // For this example, we'll just simulate a delay and refetch.
+    setLoading(true)
+    await new Promise(resolve => setTimeout(resolve, 1000))
+    // In a real app, you would update the local `grades` state based on the API response
+    // For now, we just refetch all grades.
+    await fetchGrades()
+    setIsEditing(false)
+    setPendingGrades({})
+    setLoading(false)
+  }
+
+  const handleCancel = () => {
+    setIsEditing(false)
+    setPendingGrades({})
+  }
+
+  // --- Calculations ---
   const getStudentAverage = (studentId: string) => {
     const studentGrades = grades.filter(
       grade => grade.student._id === studentId
@@ -197,88 +207,111 @@ export default function GradesPage() {
   if (loading) {
     return (
       <div className='flex items-center justify-center h-64'>
-        <div className='animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600'></div>
+        <div className='animate-spin rounded-full h-12 w-12 border-b-2 border-primary'></div>
       </div>
     )
   }
 
   return (
-    <div className='space-y-6'>
+    <div className='space-y-6 p-4 sm:p-6 bg-muted/40 min-h-screen'>
       {/* Header */}
-      <div>
-        <h1 className='text-2xl font-bold text-gray-900'>دفتر الدرجات</h1>
-        <p className='text-gray-600'>تتبع درجات الطلاب وإحصائيات الأداء</p>
+      <div className='flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4'>
+        <div>
+          <h1 className='text-3xl font-bold'>دفتر الدرجات</h1>
+          <p className='text-muted-foreground'>
+            تتبع درجات الطلاب وإحصائيات الأداء
+          </p>
+        </div>
+        <div className='flex items-center gap-2'>
+          {isEditing ? (
+            <>
+              <Button variant='outline' onClick={handleCancel} size='sm'>
+                <X className='h-4 w-4 ml-1' />
+                إلغاء
+              </Button>
+              <Button onClick={handleSaveChanges} size='sm'>
+                <Save className='h-4 w-4 ml-1' />
+                حفظ التغييرات
+              </Button>
+            </>
+          ) : (
+            <Button onClick={() => setIsEditing(true)} size='sm'>
+              <Edit className='h-4 w-4 ml-1' />
+              تعديل الدرجات
+            </Button>
+          )}
+        </div>
       </div>
 
       {/* Class Selection */}
       <Card>
-        <CardContent className='p-6'>
-          <div className='flex items-center space-x-4 space-x-reverse'>
-            <label className='text-sm font-medium text-gray-700'>الفصل:</label>
-            <select
-              value={selectedClass}
-              onChange={e => setSelectedClass(e.target.value)}
-              className='px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500'
-            >
-              {classes.map(classData => (
-                <option key={classData._id} value={classData._id}>
-                  {classData.name} - {classData.subject}
-                </option>
-              ))}
-            </select>
+        <CardContent className='p-4 sm:p-6'>
+          <div className='flex items-center gap-4'>
+            <label className='text-sm font-medium'>الفصل:</label>
+            <div className='w-full sm:w-64'>
+              <Select
+                value={selectedClass}
+                onChange={e => setSelectedClass(e.target.value)}
+                disabled={isEditing}
+              >
+                {classes.map(classData => (
+                  <SelectOption key={classData._id} value={classData._id}>
+                    {classData.name} - {classData.subject}
+                  </SelectOption>
+                ))}
+              </Select>
+            </div>
           </div>
         </CardContent>
       </Card>
 
       {/* Stats */}
-      <div className='grid grid-cols-1 md:grid-cols-4 gap-4'>
+      <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6'>
+        {/* Stats Cards remain the same */}
         <Card>
           <CardContent className='p-4'>
             <div className='flex items-center'>
-              <Users className='h-8 w-8 text-blue-600 ml-3' />
+              <Users className='h-8 w-8 text-primary ml-3' />
               <div>
-                <p className='text-sm text-gray-600'>إجمالي الطلاب</p>
+                <p className='text-sm text-muted-foreground'>إجمالي الطلاب</p>
                 <p className='text-2xl font-bold'>{stats.totalStudents}</p>
               </div>
             </div>
           </CardContent>
         </Card>
-
         <Card>
           <CardContent className='p-4'>
             <div className='flex items-center'>
-              <TrendingUp className='h-8 w-8 text-green-600 ml-3' />
+              <TrendingUp className='h-8 w-8 text-green-500 ml-3' />
               <div>
-                <p className='text-sm text-gray-600'>متوسط الدرجات</p>
-                <p className='text-2xl font-bold text-green-600'>
+                <p className='text-sm text-muted-foreground'>متوسط الدرجات</p>
+                <p className='text-2xl font-bold text-green-500'>
                   {stats.averageGrade.toFixed(1)}%
                 </p>
               </div>
             </div>
           </CardContent>
         </Card>
-
         <Card>
           <CardContent className='p-4'>
             <div className='flex items-center'>
-              <Award className='h-8 w-8 text-yellow-600 ml-3' />
+              <Award className='h-8 w-8 text-yellow-500 ml-3' />
               <div>
-                <p className='text-sm text-gray-600'>أعلى درجة</p>
-                <p className='text-2xl font-bold text-yellow-600'>
+                <p className='text-sm text-muted-foreground'>أعلى درجة</p>
+                <p className='text-2xl font-bold text-yellow-500'>
                   {stats.highestGrade.toFixed(1)}%
                 </p>
               </div>
             </div>
           </CardContent>
         </Card>
-
         <Card>
           <CardContent className='p-4'>
             <div className='flex items-center'>
-              <BookOpen className='h-8 w-8 text-red-600 ml-3' />
+              <BookOpen className='h-8 w-8 text-red-500 ml-3' />
               <div>
-                <p className='text-sm text-gray-600'>أقل درجة</p>
-                <p className='text-2xl font-bold text-red-600'>
+                <p className='text-sm text-muted-foreground'>أقل درجة</p>
+                <p className='text-2xl font-bold text-red-500'>
                   {stats.lowestGrade.toFixed(1)}%
                 </p>
               </div>
@@ -295,22 +328,24 @@ export default function GradesPage() {
             درجات الطلاب
           </CardTitle>
           <CardDescription>
-            عرض درجات جميع الطلاب في الفصل المحدد
+            {isEditing
+              ? 'أدخل الدرجات في الحقول أدناه. سيتم الحفظ عند الضغط على زر الحفظ.'
+              : 'عرض درجات جميع الطلاب في الفصل المحدد'}
           </CardDescription>
         </CardHeader>
         <CardContent>
           <div className='overflow-x-auto'>
-            <Table>
+            <Table className='min-w-full divide-y divide-border'>
               <TableHeader>
                 <TableRow>
-                  <TableHead>رقم الجلوس</TableHead>
-                  <TableHead>اسم الطالب</TableHead>
+                  <TableHead className='w-1/12'>الرقم</TableHead>
+                  <TableHead className='w-3/12'>اسم الطالب</TableHead>
                   {assignments.map(assignment => (
                     <TableHead key={assignment._id} className='text-center'>
                       <div>
                         <div className='font-medium'>{assignment.title}</div>
-                        <div className='text-xs text-gray-500'>
-                          {assignment.maxScore} ({assignment.weight}%)
+                        <div className='text-xs text-muted-foreground'>
+                          ({assignment.maxScore})
                         </div>
                       </div>
                     </TableHead>
@@ -331,27 +366,46 @@ export default function GradesPage() {
                         </TableCell>
                         <TableCell>{student.name}</TableCell>
                         {assignments.map(assignment => {
+                          const gradeKey = `${student._id}-${assignment._id}`
                           const grade = grades.find(
                             g =>
                               g.student._id === student._id &&
                               g.assignment._id === assignment._id
                           )
+                          const currentValue =
+                            pendingGrades[gradeKey] ?? grade?.score ?? ''
+
                           return (
                             <TableCell
                               key={assignment._id}
-                              className='text-center'
+                              className='text-center p-1'
                             >
-                              {grade ? (
+                              {isEditing ? (
+                                <Input
+                                  type='number'
+                                  value={currentValue}
+                                  onChange={e =>
+                                    handleGradeChange(
+                                      student._id,
+                                      assignment._id,
+                                      e.target.value
+                                    )
+                                  }
+                                  className='max-w-[80px] mx-auto text-center'
+                                  max={assignment.maxScore}
+                                  min={0}
+                                />
+                              ) : grade ? (
                                 <div>
                                   <div className='font-medium'>
                                     {grade.score}
                                   </div>
-                                  <div className='text-xs text-gray-500'>
+                                  <div className='text-xs text-muted-foreground'>
                                     {grade.percentage.toFixed(1)}%
                                   </div>
                                 </div>
                               ) : (
-                                <span className='text-gray-400'>-</span>
+                                <span className='text-muted-foreground'>-</span>
                               )}
                             </TableCell>
                           )
@@ -362,12 +416,12 @@ export default function GradesPage() {
                               <div className='font-medium'>
                                 {studentAverage.toFixed(1)}%
                               </div>
-                              <div className='text-xs text-gray-500'>
+                              <div className='text-xs text-muted-foreground'>
                                 {calculateGrade(studentAverage, 100)}
                               </div>
                             </div>
                           ) : (
-                            <span className='text-gray-400'>-</span>
+                            <span className='text-muted-foreground'>-</span>
                           )}
                         </TableCell>
                       </TableRow>

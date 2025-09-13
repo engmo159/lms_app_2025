@@ -20,6 +20,7 @@ import {
 import { Button } from '@/components/ui/Button'
 import Modal from '@/components/ui/Modal'
 import Input from '@/components/ui/Input'
+import { Select, SelectOption } from '@/components/ui/Select'
 
 interface Student {
   _id: string
@@ -202,8 +203,8 @@ export default function StudentsPage() {
       {/* Header */}
       <div className='flex items-center justify-between'>
         <div>
-          <h1 className='text-2xl font-bold text-gray-900'>الطلاب</h1>
-          <p className='text-gray-600'>إدارة طلابك في جميع الفصول</p>
+          <h1 className='text-2xl font-bold text-foreground'>الطلاب</h1>
+          <p className='text-muted-foreground'>إدارة طلابك في جميع الفصول</p>
         </div>
         <Button onClick={openModal} className='flex items-center'>
           <Plus className='h-4 w-4 ml-2' />
@@ -227,18 +228,17 @@ export default function StudentsPage() {
               </div>
             </div>
             <div className='sm:w-64'>
-              <select
+              <Select
                 value={selectedClass}
                 onChange={e => setSelectedClass(e.target.value)}
-                className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500'
               >
-                <option value=''>جميع الفصول</option>
+                <SelectOption value=''>جميع الفصول</SelectOption>
                 {classes.map(classData => (
-                  <option key={classData._id} value={classData._id}>
+                  <SelectOption key={classData._id} value={classData._id}>
                     {classData.name} - {classData.subject}
-                  </option>
+                  </SelectOption>
                 ))}
-              </select>
+              </Select>
             </div>
           </div>
         </CardContent>
@@ -274,7 +274,7 @@ export default function StudentsPage() {
                   <TableCell>
                     <div>
                       <div className='font-medium'>{student.class.name}</div>
-                      <div className='text-sm text-gray-500'>
+                      <div className='text-sm text-muted-foreground'>
                         {student.class.subject}
                       </div>
                     </div>
@@ -285,7 +285,7 @@ export default function StudentsPage() {
                       <div className='font-medium'>
                         {student.parentName || '-'}
                       </div>
-                      <div className='text-sm text-gray-500'>
+                      <div className='text-sm text-muted-foreground'>
                         {student.parentPhone || '-'}
                       </div>
                     </div>
@@ -343,24 +343,23 @@ export default function StudentsPage() {
           </div>
 
           <div>
-            <label className='block text-sm font-medium text-gray-700 mb-2'>
+            <label className='block text-sm font-medium text-foreground mb-2'>
               الفصل
             </label>
-            <select
+            <Select
               value={formData.classId}
               onChange={e =>
                 setFormData({ ...formData, classId: e.target.value })
               }
-              className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500'
               required
             >
-              <option value=''>اختر الفصل</option>
+              <SelectOption value=''>اختر الفصل</SelectOption>
               {classes.map(classData => (
-                <option key={classData._id} value={classData._id}>
+                <SelectOption key={classData._id} value={classData._id}>
                   {classData.name} - {classData.subject}
-                </option>
+                </SelectOption>
               ))}
-            </select>
+            </Select>
           </div>
 
           <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
@@ -401,11 +400,11 @@ export default function StudentsPage() {
           </div>
 
           <div>
-            <label className='block text-sm font-medium text-gray-700 mb-2'>
+            <label className='block text-sm font-medium text-foreground mb-2'>
               ملاحظات
             </label>
             <textarea
-              className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500'
+              className='w-full px-3 py-2 border border-input bg-background text-foreground rounded-md focus:outline-none focus:ring-2 focus:ring-primary'
               rows={3}
               value={formData.notes}
               onChange={e =>

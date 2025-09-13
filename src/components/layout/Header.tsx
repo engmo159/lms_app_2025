@@ -26,9 +26,9 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
   const { data: session } = useSession()
 
   return (
-    <header className='sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 shadow-soft'>
-      <div className='container flex h-16 items-center justify-between px-4'>
-        <div className='flex items-center gap-4 rtl:space-x-reverse'>
+    <header className='sticky top-0 z-40 w-full border-b bg-background'>
+      <div className='container flex h-16 items-center px-4 sm:px-6'>
+        <div className='flex items-center gap-4'>
           <Button
             variant='ghost'
             size='icon'
@@ -39,26 +39,26 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
             <span className='sr-only'>Toggle Menu</span>
           </Button>
           <div className='flex items-center gap-2'>
-            <div className='h-8 w-8 rounded-lg bg-primary flex items-center justify-center'>
-              <span className='text-primary-foreground font-bold text-lg'>
+            <div className='flex h-8 w-8 items-center justify-center rounded-lg bg-primary'>
+              <span className='text-lg font-bold text-primary-foreground'>
                 ف
               </span>
             </div>
-            <h1 className='text-lg font-bold text-foreground hidden sm:block'>
+            <h1 className='hidden text-lg font-bold text-foreground sm:block'>
               نظام إدارة الفصول
             </h1>
           </div>
         </div>
 
-        <div className='flex items-center gap-2 rtl:space-x-reverse'>
-          <nav className='flex items-center gap-1 rtl:space-x-reverse'>
+        <div className='flex flex-1 items-center justify-end gap-4'>
+          <nav className='flex items-center gap-2'>
             <ThemeToggle />
 
             <Button variant='ghost' size='icon' className='relative'>
               <Bell className='h-5 w-5' />
-              <span className='absolute top-1 right-1 flex h-2 w-2'>
-                <span className='animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75'></span>
-                <span className='relative inline-flex rounded-full h-2 w-2 bg-red-500'></span>
+              <span className='absolute right-1 top-1 flex h-2 w-2'>
+                <span className='absolute inline-flex h-full w-full animate-ping rounded-full bg-red-400 opacity-75'></span>
+                <span className='relative inline-flex h-2 w-2 rounded-full bg-red-500'></span>
               </span>
               <span className='sr-only'>Notifications</span>
             </Button>

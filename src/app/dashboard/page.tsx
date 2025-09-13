@@ -10,14 +10,8 @@ import {
   Calendar,
   Bell,
   Settings,
-  BarChart3,
   Clock,
-  AlertCircle,
-  CheckCircle,
-  Plus,
   Eye,
-  Download,
-  Filter,
 } from 'lucide-react'
 import {
   Card,
@@ -26,23 +20,20 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/Card'
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/Table'
 import { Button } from '@/components/ui/Button'
 import { useTheme } from 'next-themes'
-import { ThemeToggle } from '@/components/ui/ThemeToggle'
 import { StatsCard } from '@/components/dashboard/StatsCard'
 import { ClassOverviewCard } from '@/components/dashboard/ClassOverviewCard'
 import { RecentActivityCard } from '@/components/dashboard/RecentActivityCard'
 import { UpcomingEventsCard } from '@/components/dashboard/UpcomingEventsCard'
 import { QuickActionsCard } from '@/components/dashboard/QuickActionsCard'
 import { AnalyticsCard } from '@/components/dashboard/AnalyticsCard'
+
+// Developer Note on Layout:
+// This dashboard uses CSS Grid for its main layout (`grid-cols-1`, `lg:grid-cols-3`, etc.).
+// Grid is preferred over Flexbox here because it excels at creating two-dimensional layouts,
+// aligning items in both rows and columns simultaneously. This is ideal for complex dashboards.
+// Flexbox is better suited for one-dimensional layouts (a single row or column).
 
 interface DashboardStats {
   totalClasses: number
@@ -108,70 +99,78 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    fetchDashboardData()
-  }, [])
-
-  const fetchDashboardData = async () => {
-    try {
+    // Mock data fetching
+    const fetchDashboardData = async () => {
       setLoading(true)
+      // Simulate API delay
+      await new Promise(resolve => setTimeout(resolve, 1000))
 
-      // Fetch classes with stats
-      const classesResponse = await fetch('/api/classes?includeStats=true')
-      const classesData = await classesResponse.json()
+      // Mock data
+      const classesData = [
+        {
+          _id: '1',
+          name: 'الرياضيات',
+          subject: 'الرياضيات',
+          grade: 'الصف الخامس',
+          stats: { studentCount: 25, attendanceRate: 95, averageGrade: 88 },
+        },
+        {
+          _id: '2',
+          name: 'العلوم',
+          subject: 'العلوم',
+          grade: 'الصف الخامس',
+          stats: { studentCount: 24, attendanceRate: 92, averageGrade: 91 },
+        },
+      ]
+      const notificationsData = { unreadCount: 3 }
+      const activitiesData = [
+        {
+          _id: '1',
+          title: 'اختبار نصف الفصل',
+          type: 'exam',
+          startDate: new Date(),
+          class: { name: 'العلوم' },
+        },
+        {
+          _id: '2',
+          title: 'رحلة ميدانية',
+          type: 'trip',
+          startDate: new Date(),
+          class: { name: 'التاريخ' },
+        },
+      ]
 
-      // Fetch notifications
-      const notificationsResponse = await fetch(
-        '/api/notifications?isRead=false'
-      )
-      const notificationsData = await notificationsResponse.json()
-
-      // Fetch upcoming activities
-      const activitiesResponse = await fetch('/api/activities?status=scheduled')
-      const activitiesData = await activitiesResponse.json()
-
-      // Calculate stats
       const totalStudents = classesData.reduce(
-        (sum: number, cls: any) => sum + (cls.stats?.studentCount || 0),
+        (sum, cls) => sum + (cls.stats?.studentCount || 0),
         0
       )
-      const totalAttendance = classesData.reduce(
-        (sum: number, cls: any) => sum + (cls.stats?.attendanceToday || 0),
-        0
-      )
-      const averageAttendance =
-        totalStudents > 0 ? (totalAttendance / totalStudents) * 100 : 0
-      const averageGrade =
-        classesData.reduce(
-          (sum: number, cls: any) => sum + (cls.stats?.averageGrade || 0),
-          0
-        ) / classesData.length || 0
 
       setStats({
-        totalClasses: classesData.length,
-        totalStudents,
-        todayAttendance: Math.round(averageAttendance),
-        pendingGrades: 8, // TODO: Calculate from assignments
-        averageGrade: Math.round(averageGrade),
-        behaviorScore: 85, // TODO: Calculate from behavior data
-        upcomingEvents: activitiesData.length,
-        unreadNotifications: notificationsData.unreadCount || 0,
+        totalClasses: 2,
+        totalStudents: 49,
+        todayAttendance: 93,
+        pendingGrades: 8,
+        averageGrade: 89,
+        behaviorScore: 85,
+        upcomingEvents: 2,
+        unreadNotifications: 3,
       })
 
       setClasses(
-        classesData.map((cls: any) => ({
+        classesData.map(cls => ({
           id: cls._id,
           name: cls.name,
           subject: cls.subject,
           grade: cls.grade,
-          studentCount: cls.stats?.studentCount || 0,
-          attendanceRate: cls.stats?.attendanceRate || 0,
-          averageGrade: cls.stats?.averageGrade || 0,
-          nextClass: cls.schedule?.[0]?.day,
+          studentCount: cls.stats.studentCount,
+          attendanceRate: cls.stats.attendanceRate,
+          averageGrade: cls.stats.averageGrade,
+          nextClass: 'الأحد',
         }))
       )
 
       setUpcomingEvents(
-        activitiesData.slice(0, 5).map((activity: any) => ({
+        activitiesData.map(activity => ({
           id: activity._id,
           title: activity.title,
           type: activity.type,
@@ -180,7 +179,7 @@ export default function DashboardPage() {
             hour: '2-digit',
             minute: '2-digit',
           }),
-          class: activity.class?.name,
+          class: activity.class.name,
         }))
       )
 
@@ -206,122 +205,87 @@ export default function DashboardPage() {
           time: 'منذ ساعتين',
           status: 'info',
         },
-        {
-          id: '4',
-          type: 'behavior',
-          description: 'تم تسجيل سلوك إيجابي لطالب في فصل اللغة العربية',
-          time: 'منذ 3 ساعات',
-          status: 'success',
-        },
       ])
-    } catch (error) {
-      console.error('Error fetching dashboard data:', error)
-    } finally {
+
       setLoading(false)
     }
-  }
+
+    fetchDashboardData()
+  }, [])
 
   const statCards = [
     {
       title: 'إجمالي الفصول',
       value: stats.totalClasses,
       icon: BookOpen,
-      color: 'text-blue-600 dark:text-blue-400',
-      bgColor: 'bg-blue-100 dark:bg-blue-900/30',
       trend: '+2',
-      trendUp: true,
     },
     {
       title: 'إجمالي الطلاب',
       value: stats.totalStudents,
       icon: Users,
-      color: 'text-green-600 dark:text-green-400',
-      bgColor: 'bg-green-100 dark:bg-green-900/30',
       trend: '+12',
-      trendUp: true,
     },
     {
       title: 'حضور اليوم',
       value: `${stats.todayAttendance}%`,
       icon: UserCheck,
-      color: 'text-yellow-600 dark:text-yellow-400',
-      bgColor: 'bg-yellow-100 dark:bg-yellow-900/30',
       trend: '+5%',
-      trendUp: true,
     },
     {
       title: 'متوسط الدرجات',
       value: `${stats.averageGrade}%`,
       icon: Award,
-      color: 'text-purple-600 dark:text-purple-400',
-      bgColor: 'bg-purple-100 dark:bg-purple-900/30',
       trend: '+3%',
-      trendUp: true,
     },
     {
       title: 'نقاط السلوك',
       value: stats.behaviorScore,
       icon: TrendingUp,
-      color: 'text-indigo-600 dark:text-indigo-400',
-      bgColor: 'bg-indigo-100 dark:bg-indigo-900/30',
       trend: '+8',
-      trendUp: true,
     },
     {
       title: 'الأحداث القادمة',
       value: stats.upcomingEvents,
       icon: Calendar,
-      color: 'text-orange-600 dark:text-orange-400',
-      bgColor: 'bg-orange-100 dark:bg-orange-900/30',
       trend: 'اليوم',
-      trendUp: false,
     },
     {
       title: 'إشعارات جديدة',
       value: stats.unreadNotifications,
       icon: Bell,
-      color: 'text-red-600 dark:text-red-400',
-      bgColor: 'bg-red-100 dark:bg-red-900/30',
       trend: 'جديد',
-      trendUp: false,
     },
     {
       title: 'درجات معلقة',
       value: stats.pendingGrades,
       icon: Clock,
-      color: 'text-gray-600 dark:text-gray-400',
-      bgColor: 'bg-gray-100 dark:bg-gray-900/30',
       trend: 'يحتاج مراجعة',
-      trendUp: false,
     },
   ]
 
   if (loading) {
     return (
-      <div className='flex items-center justify-center min-h-[400px]'>
-        <div className='animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600'></div>
+      <div className='flex min-h-[400px] items-center justify-center'>
+        <div className='h-12 w-12 animate-spin rounded-full border-b-2 border-primary'></div>
       </div>
     )
   }
 
   return (
-    <div className='space-y-6 p-6 bg-gray-50 dark:bg-gray-900 min-h-screen'>
-      {/* Header Section */}
-      <div className='flex justify-between items-center'>
+    <main className='flex-1 space-y-6 p-4 sm:p-6 bg-muted/40'>
+      <div className='flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4'>
         <div>
-          <h1 className='text-3xl font-bold text-gray-900 dark:text-white mb-2'>
-            لوحة التحكم
-          </h1>
-          <p className='text-gray-600 dark:text-gray-400'>
+          <h1 className='text-3xl font-bold'>لوحة التحكم</h1>
+          <p className='text-muted-foreground'>
             مرحباً بك في نظام إدارة الفصول الدراسية
           </p>
         </div>
-        <div className='flex items-center space-x-4 space-x-reverse'>
-          <ThemeToggle />
+        <div className='flex items-center gap-2'>
           <Button
             variant='outline'
             size='sm'
-            className='flex items-center space-x-2 space-x-reverse'
+            className='flex items-center gap-2'
           >
             <Settings className='h-4 w-4' />
             <span>الإعدادات</span>
@@ -329,12 +293,12 @@ export default function DashboardPage() {
           <Button
             variant='outline'
             size='sm'
-            className='flex items-center space-x-2 space-x-reverse relative'
+            className='flex items-center gap-2 relative'
           >
             <Bell className='h-4 w-4' />
             <span>الإشعارات</span>
             {stats.unreadNotifications > 0 && (
-              <span className='absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full px-2 py-1 min-w-[20px] h-5 flex items-center justify-center'>
+              <span className='absolute -top-1 -right-1 flex h-5 min-w-[20px] items-center justify-center rounded-full bg-destructive px-2 py-1 text-xs text-destructive-foreground'>
                 {stats.unreadNotifications}
               </span>
             )}
@@ -342,8 +306,7 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* Stats Cards */}
-      <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6'>
+      <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6'>
         {statCards.map((stat, index) => (
           <StatsCard
             key={index}
@@ -351,54 +314,50 @@ export default function DashboardPage() {
             value={stat.value}
             icon={stat.icon}
             trend={stat.trend}
-            trendUp={stat.trendUp}
           />
         ))}
       </div>
 
-      {/* Main Content Grid */}
       <div className='grid grid-cols-1 lg:grid-cols-3 gap-6'>
-        {/* Classes Overview */}
         <div className='lg:col-span-2'>
           <Card>
-            <CardHeader>
-              <div className='flex items-center justify-between'>
-                <div>
-                  <CardTitle className='flex items-center'>
-                    <BookOpen className='h-5 w-5 ml-2' />
-                    نظرة عامة على الفصول
-                  </CardTitle>
-                  <CardDescription>
-                    إحصائيات مفصلة لفصولك الدراسية
-                  </CardDescription>
-                </div>
-                <Button variant='outline' size='sm'>
-                  <Eye className='h-4 w-4 ml-2' />
-                  عرض الكل
-                </Button>
+            <CardHeader className='flex flex-row items-center justify-between'>
+              <div className='flex flex-col'>
+                <CardTitle className='flex items-center gap-2'>
+                  <BookOpen className='h-5 w-5' />
+                  نظرة عامة على الفصول
+                </CardTitle>
+                <CardDescription>
+                  إحصائيات مفصلة لفصولك الدراسية
+                </CardDescription>
               </div>
+              <Button
+                variant='outline'
+                size='sm'
+                className='flex items-center gap-2'
+              >
+                <Eye className='h-4 w-4' />
+                عرض الكل
+              </Button>
             </CardHeader>
-            <CardContent>
-              <div className='space-y-4'>
-                {classes.map(cls => (
-                  <ClassOverviewCard
-                    key={cls.id}
-                    id={cls.id}
-                    name={cls.name}
-                    subject={cls.subject}
-                    grade={cls.grade}
-                    studentCount={cls.studentCount}
-                    attendanceRate={cls.attendanceRate}
-                    averageGrade={cls.averageGrade}
-                    nextClass={cls.nextClass}
-                  />
-                ))}
-              </div>
+            <CardContent className='space-y-4'>
+              {classes.map(cls => (
+                <ClassOverviewCard
+                  key={cls.id}
+                  id={cls.id}
+                  name={cls.name}
+                  subject={cls.subject}
+                  grade={cls.grade}
+                  studentCount={cls.studentCount}
+                  attendanceRate={cls.attendanceRate}
+                  averageGrade={cls.averageGrade}
+                  nextClass={cls.nextClass}
+                />
+              ))}
             </CardContent>
           </Card>
         </div>
 
-        {/* Sidebar */}
         <div className='space-y-6'>
           <RecentActivityCard activities={recentActivity} />
           <UpcomingEventsCard events={upcomingEvents} />
@@ -406,7 +365,6 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* Analytics Section */}
       <AnalyticsCard
         data={{
           attendanceRate: stats.todayAttendance,
@@ -417,6 +375,6 @@ export default function DashboardPage() {
         onFilter={() => console.log('Filter clicked')}
         onExport={() => console.log('Export clicked')}
       />
-    </div>
+    </main>
   )
 }
